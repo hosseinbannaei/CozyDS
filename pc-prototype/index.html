@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CozyDS - Portrait Layout & Gesture Prototype</title>
+<style>
+  :root {
+    --bg-dark: #12141a;
+    --phone-bezel: #1e222b;
+    --phone-screen-bg: #0a0b0e;
+    --accent: #e53935;
+    --accent-glow: rgba(229, 57, 53, 0.4);
+    --gear-silver: #d1d5db;
+    --gear-blue: #1e3a8a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  body {
+    background: var(--bg-dark);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* SIDE CONTROLS & INFO */
+  .control-panel {
+    max-width: 360px;
+    background: #1a1e29;
+    border: 1px solid #2d3748;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  }
+  .control-panel h2 {
+    font-size: 20px;
+    margin-bottom: 8px;
+    color: #f87171;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .control-panel p {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin-bottom: 18px;
+  }
+  .badge {
+    background: #374151;
+    color: #f1f5f9;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .feature-box {
+    background: #0f172a;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 14px;
+    border-left: 3px solid #ef4444;
+  }
+  .feature-box h4 { font-size: 13px; color: #fca5a5; margin-bottom: 4px; }
+  .feature-box p { font-size: 12px; color: #cbd5e1; margin-bottom: 0; }
+  
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 15px;
+  }
+  .btn-action {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .btn-action:hover { background: #1d4ed8; transform: translateY(-1px); }
+  .btn-action.secondary { background: #334155; }
+  .btn-action.secondary:hover { background: #475569; }
+
+  /* PHONE SIMULATOR */
+  .phone-frame {
+    width: 380px;
+    height: 780px;
+    background: var(--phone-bezel);
+    border-radius: 44px;
+    padding: 12px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), inset 0 0 0 2px #334155;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: var(--phone-screen-bg);
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* CAMERA PUNCH HOLE */
+  .camera-hole {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 12px;
+    background: #000;
+    border-radius: 50%;
+    z-index: 100;
+    box-shadow: inset 0 0 2px #333;
+  }
+
+  /* TOP SCREEN CONTAINER */
+  .top-screen-container {
+    width: 100%;
+    height: 60%;
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .top-screen-canvas {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: #111;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  }
+
+  /* DUMMY PIXEL GAME WORLD */
+  .game-world {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .pixel-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .pixel-building {
+    position: absolute;
+    top: 25px;
+    left: 45px;
+    width: 110px;
+    height: 80px;
+    background: #b91c1c;
+    border: 3px solid #7f1d1d;
+    border-radius: 4px;
+  }
+  .pixel-roof {
+    position: absolute;
+    top: -16px;
+    left: -4px;
+    right: -4px;
+    height: 18px;
+    background: #f87171;
+    border: 3px solid #b91c1c;
+    border-radius: 8px 8px 0 0;
+  }
+  .pixel-player {
+    position: absolute;
+    width: 26px;
+    height: 38px;
+    background: #ef4444;
+    border: 2px solid #991b1b;
+    border-radius: 6px;
+    bottom: 50px;
+    left: 160px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .player-hat {
+    width: 22px;
+    height: 10px;
+    background: #ffffff;
+    border-radius: 4px 4px 0 0;
+  }
+  .follower-pokemon {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: #fbbf24;
+    border-radius: 50%;
+    bottom: 45px;
+    left: 125px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  }
+  .location-banner {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #fef08a;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .upscale-tag {
+    position: absolute;
+    bottom: 8px;
+    left: 10px;
+    background: rgba(220, 38, 38, 0.85);
+    color: white;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  /* LOWER SECTION: CONTROLS & DOCK */
+  .lower-section {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 15px 12px;
+  }
+
+  /* VIRTUAL CONTROLS */
+  .controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    transition: opacity 0.25s, transform 0.25s;
+  }
+  .d-pad {
+    width: 110px;
+    height: 110px;
+    position: relative;
+  }
+  .d-btn {
+    position: absolute;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 14px;
+  }
+  .d-btn:active { background: rgba(239, 68, 68, 0.4); color: white; transform: scale(0.94); }
+  .d-up { width: 36px; height: 36px; top: 0; left: 37px; }
+  .d-down { width: 36px; height: 36px; bottom: 0; left: 37px; }
+  .d-left { width: 36px; height: 36px; top: 37px; left: 0; }
+  .d-right { width: 36px; height: 36px; top: 37px; right: 0; }
+  .d-center { width: 36px; height: 36px; top: 37px; left: 37px; background: rgba(255,255,255,0.03); border: none; }
+
+  .action-buttons {
+    width: 110px;
+    height: 110px;
+    position: relative;
+  }
+  .btn-round {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #f1f5f9;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+  }
+  .btn-round:active { background: #ef4444; transform: scale(0.9); }
+  .btn-a { right: 0; top: 37px; background: rgba(239, 68, 68, 0.25); border-color: rgba(239, 68, 68, 0.5); }
+  .btn-b { bottom: 0; left: 37px; background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.5); }
+  .btn-x { top: 0; left: 37px; }
+  .btn-y { left: 0; top: 37px; }
+
+  /* COZY BOTTOM SHEET / POKE-PHONE DRAWER */
+  .poke-drawer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 380px;
+    background: #1e2433;
+    border-top: 2px solid #ef4444;
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.7);
+    transition: transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.15);
+    transform: translateY(305px); /* Only dock handle visible by default */
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+  }
+  .poke-drawer.open {
+    transform: translateY(0);
+  }
+
+  .drawer-handle-bar {
+    width: 100%;
+    padding: 12px 16px 8px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    background: #1a202c;
+    border-radius: 26px 26px 0 0;
+  }
+  .handle-pill {
+    width: 44px;
+    height: 5px;
+    background: #64748b;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    transition: background 0.2s;
+  }
+  .drawer-handle-bar:hover .handle-pill { background: #ef4444; }
+
+  .handle-content {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .gear-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #fca5a5;
+  }
+  .gear-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ef4444;
+    display: inline-block;
+  }
+
+  /* NINTENDO DS TOUCH SCREEN CONTAINER */
+  .ds-bottom-screen {
+    flex: 1;
+    background: #0f172a;
+    margin: 8px 12px 14px 12px;
+    border-radius: 16px;
+    border: 2px solid #334155;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.6);
+  }
+
+  /* POKEGEAR TOUCH UI */
+  .touch-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
+  .touch-tile {
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: #f1f5f9;
+  }
+  .touch-tile:active {
+    background: #ef4444;
+    transform: scale(0.95);
+    border-color: #fca5a5;
+  }
+  .touch-tile svg { width: 22px; height: 22px; fill: currentColor; }
+  .touch-tile span { font-size: 11px; font-weight: 600; }
+
+  /* RUNNING SHOES TOGGLE (HGSS FEATURE) */
+  .shoes-bar {
+    background: #111827;
+    padding: 8px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #1f2937;
+  }
+  .shoe-toggle {
+    background: #374151;
+    color: #94a3b8;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .shoe-toggle.active {
+    background: #16a34a;
+    color: white;
+    box-shadow: 0 0 10px rgba(22, 163, 74, 0.5);
+  }
+
+  .status-indicator {
+    font-size: 10px;
+    color: #94a3b8;
+  }
+
+  /* Dim controls when drawer is open */
+  .phone-screen.drawer-active .controls-row {
+    opacity: 0.15;
+    pointer-events: none;
+    transform: translateY(10px);
+  }
+</style>
+</head>
+<body>
+
+  <!-- LEFT: EXPLANATION & CONTROLS -->
+  <div class="control-panel">
+    <h2><span>🎮</span> CozyDS Prototype</h2>
+    <p>A touch-first, portrait Android layout concept for <b>Pokémon SoulSilver</b> and dual-screen Nintendo DS games.</p>
+    
+    <div class="feature-box">
+      <h4>📱 The Slide-Up "Poké-Drawer"</h4>
+      <p>The DS Top Screen renders in high-res edge-to-edge. The Bottom Screen (Pokégear / Bag) lives in a fluid drawer that slides up on tap or swipe!</p>
+    </div>
+
+    <div class="feature-box">
+      <h4>⚡ Dynamic Tactile Controls</h4>
+      <p>Virtual D-pad & buttons automatically tuck away or dim when the drawer opens, giving 100% focus to touch interactions.</p>
+    </div>
+
+    <div class="feature-box">
+      <h4>✨ High-Res 3D Upscaling</h4>
+      <p>The melonDS core renders 3D models at 4x native resolution, making Pokémon and buildings pin-sharp on modern phone screens.</p>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn-action" id="toggleDrawerBtn">Toggle Poké-Drawer (Open/Close)</button>
+      <button class="btn-action secondary" id="toggleBattleBtn">Simulate Battle Mode (Auto-Split)</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: THE PHONE SIMULATOR -->
+  <div class="phone-frame">
+    <div class="camera-hole"></div>
+
+    <div class="phone-screen" id="phoneScreen">
+      
+      <!-- TOP SCREEN (GAMEPLAY 3D/2D WORLD) -->
+      <div class="top-screen-container" id="topScreenContainer">
+        <div class="top-screen-canvas">
+          <div class="game-world">
+            <div class="pixel-grid"></div>
+            <!-- Building -->
+            <div class="pixel-building">
+              <div class="pixel-roof"></div>
+            </div>
+            <!-- Player Sprite & Follower -->
+            <div class="pixel-player">
+              <div class="player-hat"></div>
+            </div>
+            <div class="follower-pokemon" title="Cyndaquil"></div>
+            <div class="location-banner">New Bark Town</div>
+            <div class="upscale-tag">4X UPSCALE (OPENGL)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOWER SECTION WITH VIRTUAL CONTROLS -->
+      <div class="lower-section">
+        <div class="controls-row">
+          <!-- D-PAD -->
+          <div class="d-pad">
+            <div class="d-btn d-up">▲</div>
+            <div class="d-btn d-down">▼</div>
+            <div class="d-btn d-left">◀</div>
+            <div class="d-btn d-right">▶</div>
+            <div class="d-center"></div>
+          </div>
+
+          <!-- ACTION BUTTONS -->
+          <div class="action-buttons">
+            <div class="btn-round btn-y">Y</div>
+            <div class="btn-round btn-x">X</div>
+            <div class="btn-round btn-b">B</div>
+            <div class="btn-round btn-a">A</div>
+          </div>
+        </div>
+
+        <div style="text-align: center; font-size: 11px; color: #475569;">
+          Swipe or tap PokéGear below ⯅
+        </div>
+      </div>
+
+      <!-- POKÉ-DRAWER (BOTTOM SCREEN) -->
+      <div class="poke-drawer" id="pokeDrawer">
+        <!-- DRAGGABLE / CLICKABLE HANDLE -->
+        <div class="drawer-handle-bar" id="drawerHandle">
+          <div class="handle-pill"></div>
+          <div class="handle-content">
+            <span class="gear-title">
+              <span class="gear-icon"></span>
+              POKÉGEAR & MENU
+            </span>
+            <span class="status-indicator" id="drawerStatus">Tap to Expand ▴</span>
+          </div>
+        </div>
+
+        <!-- ACTUAL DS TOUCH SCREEN CONTENT -->
+        <div class="ds-bottom-screen">
+          <div class="touch-grid">
+            <div class="touch-tile" onclick="alert('Map opened!')">
+              <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+              <span>Town Map</span>
+            </div>
+            <div class="touch-tile" onclick="alert('Radio turned on!')">
+              <svg viewBox="0 0 24 24"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-.83-.51-1.57-1.24-1.85L12 2 3.24 6.15zM12 4.41l6.18 2.59H5.82L12 4.41zM6 10c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm12 8H6v-2h12v2zm0-4h-8v-2h8v2z"/></svg>
+              <span>Radio</span>
+            </div>
+            <div class="touch-tile" onclick="alert('Phone Contact List opened!')">
+              <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+              <span>Phone</span>
+            </div>
+            <div class="touch-tile" onclick="alert('Bag opened!')">
+              <svg viewBox="0 0 24 24"><path d="M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3zm7 17H5V8h14v12z"/></svg>
+              <span>Bag</span>
+            </div>
+            <div class="touch-tile" onclick="alert('Pokémon Party opened!')">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20" stroke="#1e293b" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="#1e293b"/></svg>
+              <span>Pokémon</span>
+            </div>
+            <div class="touch-tile" onclick="alert('Save Game triggered!')">
+              <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+              <span>Save</span>
+            </div>
+          </div>
+
+          <!-- RUNNING SHOES TOGGLE (ICONIC HGSS TOUCH ELEMENT) -->
+          <div class="shoes-bar">
+            <span style="font-size: 11px; color: #cbd5e1;">Running Shoes:</span>
+            <div class="shoe-toggle" id="shoeToggle" onclick="toggleShoes()">AUTO-RUN: OFF</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const drawer = document.getElementById('pokeDrawer');
+    const handle = document.getElementById('drawerHandle');
+    const phoneScreen = document.getElementById('phoneScreen');
+    const toggleBtn = document.getElementById('toggleDrawerBtn');
+    const statusText = document.getElementById('drawerStatus');
+    const shoeToggle = document.getElementById('shoeToggle');
+    const topScreen = document.getElementById('topScreenContainer');
+    const battleBtn = document.getElementById('toggleBattleBtn');
+
+    let isOpen = false;
+    let isBattle = false;
+
+    function toggleDrawer() {
+      isOpen = !isOpen;
+      drawer.classList.toggle('open', isOpen);
+      phoneScreen.classList.toggle('drawer-active', isOpen);
+      statusText.textContent = isOpen ? 'Swipe Down ▾' : 'Tap to Expand ▴';
+      toggleBtn.textContent = isOpen ? 'Close Poké-Drawer' : 'Open Poké-Drawer';
+    }
+
+    handle.addEventListener('click', toggleDrawer);
+    toggleBtn.addEventListener('click', toggleDrawer);
+
+    function toggleShoes() {
+      const active = shoeToggle.classList.toggle('active');
+      shoeToggle.textContent = active ? 'AUTO-RUN: ON' : 'AUTO-RUN: OFF';
+    }
+
+    battleBtn.addEventListener('click', () => {
+      isBattle = !isBattle;
+      if (isBattle) {
+        topScreen.style.height = '48%';
+        drawer.style.height = '290px';
+        drawer.classList.add('open');
+        phoneScreen.classList.remove('drawer-active');
+        statusText.textContent = 'Battle Mode: Split Screens';
+        battleBtn.textContent = 'Return to Overworld Mode';
+      } else {
+        topScreen.style.height = '60%';
+        drawer.style.height = '380px';
+        drawer.classList.remove('open');
+        isOpen = false;
+        statusText.textContent = 'Tap to Expand ▴';
+        battleBtn.textContent = 'Simulate Battle Mode (Auto-Split)';
+      }
+    });
+  </script>
+</body>
+</html>
